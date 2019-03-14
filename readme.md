@@ -11,7 +11,8 @@ aimed at creative exploration of *sound processing* and its *visual representati
 This is a [Typescript](https://www.typescriptlang.org/) web project that uses
 [Web Audio Api](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
 and [Web MIDI Api](https://webaudio.github.io/web-midi-api/) to work with *sound* 
-while creating visual effects on *HTML Canvas.* 
+while creating visual effects on *HTML Canvas* using
+[Anime.js](https://animejs.com) 
 
 #### Application view
 ##### Rings
@@ -86,7 +87,7 @@ todo
 - [x] Basic readme
 - [ ] Basic application structure 
 - [ ] Application view
-- [ ] Play from MIDI keyboard
+- [x] Play from MIDI keyboard
 - [ ] Play from computer keyboard
 - [ ] Keyboard mapping
 - [ ] Playing patterns

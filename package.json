@@ -14,5 +14,12 @@
     "webpack": "^4.29.6",
     "webpack-cli": "^3.2.3",
     "webpack-dev-server": "^3.2.0"
+  },
+  "dependencies": {
+    "@types/animejs": "^2.0.2",
+    "@types/webmidi": "^2.0.3",
+    "animejs": "^3.0.1",
+    "reflect-metadata": "^0.1.13",
+    "tsyringe": "^3.0.1"
   }
 }
