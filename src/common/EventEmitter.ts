@@ -1,4 +1,4 @@
-export class EventEmitter<T> {
+export class EventEmitter<T = void> {
     private recipients: ((arg: T) => any)[] = []
 
     emit(data: T): void {

@@ -82,6 +82,9 @@ sound.
 #### Keyboard mapping
 todo
 
+#### Rotation effect
+todo
+
 ### Todo
 - [x] Project idea, setup repository, typescript + webpack
 - [x] Basic readme

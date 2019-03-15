@@ -5,3 +5,7 @@ export function map(value: number, min1: number, max1: number, min2: number, max
 export function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max)
 }
+
+export function degrees(rad: number): number {
+    return rad * 180/Math.PI
+}
