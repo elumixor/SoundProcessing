@@ -35,4 +35,9 @@ export class Settings {
     getSector(key: number): number {
         return key - this.standardKeyRange.min
     }
+
+    // todo get wrt to quantisation and total speed
+
+    /** Time in ms that takes for the sound to travel between segments */
+    travelTime = 400
 }

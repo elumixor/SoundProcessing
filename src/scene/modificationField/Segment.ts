@@ -1,15 +1,83 @@
 import {Renderable} from "../../common/Renderable"
 import {DrawingContext} from "../../DrawingContext"
+import {container} from "tsyringe"
+import anime from "animejs"
+import {Settings} from "../../Settings"
 
 export class Segment implements Renderable {
-    constructor(public inDist: number, public outDist: number, private a1: number, private a2: number, private dc: DrawingContext) {
+    private static dc: DrawingContext = container.resolve(DrawingContext)
+    private static settings: Settings = container.resolve(Settings)
+
+    constructor(public inDist: number, public outDist: number, private a1: number, private a2: number) {
+    }
+
+    private activated = false
+
+    private gradient = {
+        r1: 0,
+        r2: this.outDist,
+        opacity: 0,
+
+        get: () => {
+            const grd = Segment.dc.c.createRadialGradient(0, 0, this.gradient.r1, 0, 0, this.gradient.r2)
+            grd.addColorStop(0, "transparent")
+            grd.addColorStop(1, "rgba(0,0,0," + this.gradient.opacity + ")")
+            return grd
+        }
+    }
+
+    private animation: anime.AnimeInstance | null = null
+    private timeout: number | null = null
+    private animate = () => {
+        return anime({
+            targets: this.gradient,
+            r1: this.outDist,
+            opacity: 1,
+            duration: Segment.settings.travelTime * .9,
+            easing: "linear"
+        })
+    }
+
+    activate(): void {
+        if (this.activated) {
+            clearTimeout(this.timeout || 0)
+            this.animation!.pause()
+            this.gradient.r1 = 0
+            this.animation = this.animate()
+        } else {
+            this.activated = true
+            this.gradient.opacity = 0
+            this.gradient.r1 = 0
+            this.animation = this.animate()
+        }
+
+        this.timeout = setTimeout(() => {
+            this.deactivate()
+        }, Segment.settings.travelTime * .9)
+    }
+
+    deactivate(): void {
+        this.activated = false
     }
 
     render() {
-        this.dc.c.beginPath()
-        this.dc.c.arc(0, 0, this.inDist, this.a1, this.a2)
-        this.dc.c.arc(0, 0, this.outDist, this.a2, this.a1, true)
-        this.dc.c.fill()
-        this.dc.c.closePath()
+        Segment.dc.c.beginPath()
+        Segment.dc.c.arc(0, 0, this.inDist, this.a1, this.a2)
+        Segment.dc.c.arc(0, 0, this.outDist, this.a2, this.a1, true)
+        Segment.dc.c.fill()
+        Segment.dc.c.closePath()
+
+        if (this.activated) {
+            const fs = Segment.dc.c.fillStyle
+            Segment.dc.c.fillStyle = this.gradient.get()
+
+            Segment.dc.c.beginPath()
+            Segment.dc.c.arc(0, 0, this.inDist, this.a1, this.a2)
+            Segment.dc.c.arc(0, 0, this.outDist, this.a2, this.a1, true)
+            Segment.dc.c.fill()
+            Segment.dc.c.closePath()
+
+            Segment.dc.c.fillStyle = fs
+        }
     }
 }

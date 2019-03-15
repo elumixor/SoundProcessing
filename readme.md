@@ -83,7 +83,10 @@ sound.
 todo
 
 #### Rotation effect
-todo
+todo description
+
+#### Playing from midi file
+todo description implementation
 
 ### Todo
 - [x] Project idea, setup repository, typescript + webpack
@@ -91,11 +94,11 @@ todo
 - [ ] Basic application structure 
 - [ ] Application view
 - [x] Play from MIDI keyboard
-- [ ] Play from computer keyboard
+- [x] Play from computer keyboard
 - [ ] Keyboard mapping
 - [ ] Playing patterns
-- [ ] Travelling sound to the resolution ring
-- [ ] Basic animations
+- [x] Travelling sound to the resolution ring
+- [x] Basic animations
 - [ ] Modifiers basics, editing, removal, changing location and swapping
 - [ ] Directional modifiers
     - [ ] Delay

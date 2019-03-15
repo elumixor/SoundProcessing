@@ -8,7 +8,7 @@ export class SegmentedRing implements Renderable {
     protected dc: DrawingContext = container.resolve(DrawingContext)
 
     constructor(protected radius: number, protected segmentsCount: number) {
-        for (let i = 0; i < segmentsCount ; i++) {
+        for (let i = 0; i < segmentsCount; i++) {
             this.segments.push({color: "rgba(0,0,0,0.3)", radius: this.radius})
         }
     }
@@ -20,9 +20,9 @@ export class SegmentedRing implements Renderable {
 
             // start from bottom and move clockwise
             this.dc.c.beginPath()
-            this.dc.c.arc(0,0, this.segments[i].radius,
-                map((i) / (this.segmentsCount), 0, 1, 0, Math.PI * 2),
-                map((i + 1) / (this.segmentsCount), 0, 1, 0, Math.PI * 2))
+            this.dc.c.arc(0, 0, this.segments[i].radius,
+                map((i - .5) / (this.segmentsCount), 0, 1, 0, Math.PI * 2),
+                map((i + .5) / (this.segmentsCount), 0, 1, 0, Math.PI * 2))
             this.dc.c.stroke()
             this.dc.c.closePath()
         }

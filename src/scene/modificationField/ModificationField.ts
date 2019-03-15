@@ -3,6 +3,7 @@ import {Renderable} from "../../common/Renderable"
 import {DrawingContext} from "../../DrawingContext"
 import {Segment} from "./Segment"
 import {Settings} from "../../Settings"
+import {Sound} from "../../Sounds"
 
 @singleton()
 export class ModificationField implements Renderable {
@@ -27,7 +28,7 @@ export class ModificationField implements Renderable {
 
                 for (let i = 0; i < settings.keyCount; i++) {
                     const a = i * angle
-                    this.segments[j].push(new Segment(inDist, outDist, a - angle / 2, a + angle / 2, dc))
+                    this.segments[j].push(new Segment(inDist, outDist, a - angle / 2, a + angle / 2))
                 }
             }
         })
@@ -40,9 +41,13 @@ export class ModificationField implements Renderable {
             grd.addColorStop(0, "black")
             grd.addColorStop(1, "transparent")
 
-
             this.dc.c.fillStyle = grd
             r.forEach(segment => segment.render())
         })
+    }
+
+    triggerSegment(sound: Sound) {
+        const segment = this.segments[sound.travelled][this.settings.getSector(sound.key)]
+        segment.activate()
     }
 }
