@@ -1,0 +1,23 @@
+.box {
+  border: 1px solid black;
+  background-color: #ffffff20;
+  position: absolute;
+  width: 70%;
+  height: 30%;
+  left: 15%;
+}
+
+#waveBox {
+  bottom: 52.5%
+}
+
+#envBox {
+  top: 52.5%;
+}
+
+.wave-sample {
+  position: absolute;
+  //border: .1px solid #00000050;
+  background: green;
+}
+

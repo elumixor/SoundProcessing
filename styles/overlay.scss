@@ -1,14 +1,19 @@
 .overlay {
-  position: fixed !important;
-  width: 100% !important;
-  height: 100% !important;
-  background-color: rgba(0, 0, 0, .8) !important;
-  z-index: 5;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, .8);
+  z-index: 1;
 }
 
 .overlay-content {
   pointer-events: none;
-  position: fixed;
+
+  > * {
+    pointer-events: all;
+  }
+
+  position: absolute;
   width: 100%;
   height: 100%;
   z-index: 10;

@@ -7,14 +7,14 @@ export class Component {
 
     get loaded() { return this._content != null }
 
-    readonly initialized = new EventEmitter()
+    readonly initialized = new EventEmitter<Component>()
 
     constructor(templateUrl: string, afterParsed: () => any = () => {}) {
         const request = new XMLHttpRequest()
         request.addEventListener("load", (e) => {
             this._content = request.responseXML!.body as Node
             afterParsed()
-            this.initialized.emit()
+            this.initialized.emit(this)
         })
         request.open("GET", templateUrl)
         request.responseType = "document"

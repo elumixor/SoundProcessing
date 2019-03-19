@@ -25,7 +25,6 @@ export class Sound {
             Sound.mf.triggerSegment(this)
             this._travelled++
 
-
             setTimeout(() => {
                 this.move()
             }, Sound.settings.travelTime)
@@ -50,3 +49,57 @@ export class SoundManager {
 
     }
 }
+
+export class SoundEnvelope {
+    constructor(public delay: number,
+                public attackDuration: number,
+                public attackValue: number,
+                public attackConvexity: number,
+                public decayValue: number,
+                public decayDuration: number,
+                public decayConvexity: number,
+                public sustain: number,
+                public release: number,
+                public releaseConvexity: number) {}
+
+    static get default(): SoundEnvelope {
+        return new SoundEnvelope(0,
+            0,
+            1,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            2)
+    }
+}
+
+export class SoundWave {
+    static readonly samplesMax = 256
+    sampleCount: number = SoundWave.samplesMax
+
+    constructor(public readonly samples: number[], envelope: SoundEnvelope) {}
+}
+
+export const defaultSoundWaves = [
+    // Sine wave
+    new SoundWave((() => {
+        const arr: number[] = []
+        for (let i = 0; i < SoundWave.samplesMax; i++) {
+            arr.push(Math.sin(i / SoundWave.samplesMax * 2 * Math.PI))
+        }
+        return arr
+    })(), SoundEnvelope.default)
+
+    // Square
+
+    // Saw
+
+    // Cut sine
+
+    // Noise
+
+    // Custom preset
+]

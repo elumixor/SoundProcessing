@@ -4,6 +4,7 @@ import {DrawingContext} from "./DrawingContext"
 import {Scene} from "./scene/Scene"
 import {SoundManager} from "./Sounds"
 import {UI} from "./ui/UI"
+import {Overlay} from "./ui/overlays/Overlay"
 
 const dc = container.resolve(DrawingContext)
 const ui = container.resolve(UI)
@@ -26,3 +27,4 @@ dc.draw = () => {
 }
 
 dc.init()
+ui.overlays.waveEditor.initialized.subscribe(it => (it as Overlay).show()) // todo remove later
