@@ -62,6 +62,14 @@ and send it travelling to the `resolution circe`.
 * Compressor
 * Reverberation
 
+#### Wavetable sound editor
+Allows to create custom sound by defining wave
+- Define wave form in cycle
+- Define pre-delay, attack, (decay - later...), release
+- Apply oscillators
+- Key mod
+- Velocity mod
+
 #### Automatic pattern playing
 todo
 
@@ -76,7 +84,7 @@ todo
 Allows to chose from standard sounds, create a custom sound wave or upload a custom 
 sound.
 - Choosing from standard sounds
-- Custom sound wave
+- [Custom sound wave](#wavetable-sound-editor)
 - Custom file upload
 
 #### Keyboard mapping
@@ -92,10 +100,15 @@ todo description implementation
 - [x] Project idea, setup repository, typescript + webpack
 - [x] Basic readme
 - [ ] Basic application structure 
-- [ ] Application view
+- [x] Application view - rings, mf
 - [x] Play from MIDI keyboard
 - [x] Play from computer keyboard
 - [ ] Keyboard mapping
+    - [ ] Overlay window, icon click handling + animations
+    - [ ] Digital keyboard keys
+    - [ ] Piano keyboard dialog window, close, open, switch windows
+    - [ ] Digital piano, buttons, scrolling, animations
+    - [ ] Mapping key to piano
 - [ ] Playing patterns
 - [x] Travelling sound to the resolution ring
 - [x] Basic animations
@@ -105,20 +118,23 @@ todo description implementation
     - [ ] Router
     - [ ] Resolver
     - [ ] Mirror
-- [ ] Update readme docs
+- [ ] Update readme docs + code docs
 - [ ] Transformational modifiers
     - [ ] Flanger
     - [ ] Chorus
     - [ ] Distortion
     - [ ] Compressor
     - [ ] Reverberation
-- [ ] Update readme docs
+- [ ] Update readme docs + code docs
 - [ ] Quantization
 - [ ] Visual effects
 - [ ] Custom sound waves
     - [ ] Standard waves
 - [ ] Custom sound upload
-- [ ] Global app features:
+- [ ] Features
     - [ ] Global volume slider
     - [ ] Help/tutorial
+    - [ ] Harmonies
+    - [ ] Mappings switching
+- [ ] Patterns from midi 
 - [ ] Update readme

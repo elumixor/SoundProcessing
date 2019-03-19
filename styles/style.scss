@@ -1,0 +1,57 @@
+@import 'overlay.scss';
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+
+p {
+    color: green;
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.icon {
+    width: 2em;
+    height: 2em;
+    background-size: cover;
+    padding: 1em;
+    position: absolute;
+}
+
+.e-io {
+    transition: all .1s ease-in-out;
+}
+
+.hover-grow:hover {
+    transform: scale(1.1);
+}
+
+.hover-grow {
+    transform: scale(1);
+}
+
+.click-shrink {
+    transform: scale(1);
+
+}
+
+.click-shrink:active {
+    transform: scale(.9);
+
+}
+
+#canvas {
+    position: absolute;
+}
+
+#waveEditor {
+    background-image: url('../assets/images/waveEditor.png');
+}
+
+
