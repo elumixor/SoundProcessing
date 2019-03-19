@@ -22,6 +22,6 @@ export class UI {
     }
 
     constructor() {
-        this.buttons.waveEditor.onclick = () => this.showOverlay(this.overlays.waveEditor)
+        this.buttons.waveEditor.addEventListener("click", () => this.showOverlay(this.overlays.waveEditor))
     }
 }

@@ -44,16 +44,16 @@ export class Input {
                 .forEach((x: any) => x.onmidimessage = this.onMidiMessage))
 
         // Keyboard interaction
-        window.onkeydown = e => {
+        window.addEventListener("keydown", e => {
             const k = this.settings.key2Midi[e.key]
             if (k)
                 this.onKeyPressed.emit(new KeyPressedEvent(k, Input.keyboardVelocity))
-        }
-        window.onkeyup = e => {
+        })
+        window.addEventListener("keyup", e => {
             const k = this.settings.key2Midi[e.key]
             if (k)
                 this.onKeyReleased.emit(k)
-        }
+        })
     }
 
 }

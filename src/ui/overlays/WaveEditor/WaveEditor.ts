@@ -1,7 +1,8 @@
 import {singleton} from "tsyringe"
 import {Overlay} from "../Overlay"
-import {defaultSoundWaves, SoundWave} from "../../../Sounds"
+import {AFrequency, defaultSoundWaves, hertz, SoundWave} from "../../../Sounds"
 import {clamp} from "../../../util"
+import {Input} from "../../../input/Input"
 
 @singleton()
 export class WaveEditor extends Overlay {
@@ -28,14 +29,14 @@ export class WaveEditor extends Overlay {
 
     private onWaveChange(e: MouseEvent) {
         if (this.mouseDown) {
-            const index = Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1)) * this.wave.sampleCount)
-            const value = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
-            this.wave.samples[index] = value
+            this.wave.samples[
+                Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
+                    * this.wave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
             this.repaintWave()
         }
     }
 
-    constructor() {
+    constructor(private input: Input) {
         super("./src/ui/overlays/WaveEditor/WaveEditor.html", () => {
             this.waveBox = document.getElementById("waveBox") as HTMLDivElement
             this.envBox = document.getElementById("envBox") as HTMLDivElement
@@ -48,9 +49,20 @@ export class WaveEditor extends Overlay {
                 this.mouseDown = false
             })
             this.waveBox!.addEventListener("mouseleave", () => {
-                this.mouseDown = false
+                //this.mouseDown = false
             })
             this.waveBox!.addEventListener("mousemove", (e) => { this.onWaveChange(e) })
+        })
+
+        this.input.onKeyPressed.subscribe(arg => {
+            this.wave.release()
+
+            this.wave.play(hertz(arg.key))
+        })
+
+
+        this.input.onKeyReleased.subscribe(arg => {
+            this.wave.release()
         })
     }
 

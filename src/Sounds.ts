@@ -36,6 +36,8 @@ export class Sound {
 
 @singleton()
 export class SoundManager {
+    static readonly ctx = new AudioContext()
+
     constructor(private input: Input) {
         input.onKeyPressed.subscribe(k => {
             // on key:
@@ -48,6 +50,18 @@ export class SoundManager {
         })
 
     }
+}
+
+export const AFrequency = 440
+export const AMidi = 69
+export const OctaveSemitones = 12
+
+export function hertz(midi: number) {
+    return Math.pow(2, (midi - AMidi) / OctaveSemitones) * AFrequency
+}
+
+export function midi(hertz: number) {
+    return 12 * Math.log(hertz / AFrequency) / Math.log(2) + AMidi
 }
 
 export class SoundEnvelope {
@@ -80,7 +94,53 @@ export class SoundWave {
     static readonly samplesMax = 256
     sampleCount: number = SoundWave.samplesMax
 
-    constructor(public readonly samples: number[], envelope: SoundEnvelope) {}
+    private source: AudioBufferSourceNode | null
+    private readonly totalDuration: number
+    private audioBuffer: AudioBuffer
+    private readonly totalSamples: number
+
+    constructor(public readonly samples: number[], private envelope: SoundEnvelope) {
+        this.totalDuration = this.envelope.delay
+            + this.envelope.attackDuration
+            + this.envelope.decayDuration
+            + this.envelope.sustain
+            + this.envelope.release
+
+        let sampleRate = SoundManager.ctx.sampleRate
+        this.totalSamples = sampleRate * this.totalDuration
+        this.audioBuffer = SoundManager.ctx.createBuffer(1, this.totalSamples, sampleRate)
+        this.source = SoundManager.ctx.createBufferSource()
+    }
+
+    private isPlaying = false
+
+    play(freq: number) {
+        SoundManager.ctx.resume()
+
+        const totalCycles = this.totalDuration * freq
+        const samplesPerCycle = this.totalSamples / totalCycles
+        this.audioBuffer = SoundManager.ctx.createBuffer(1, this.totalSamples, SoundManager.ctx.sampleRate)
+
+        const c1 = this.audioBuffer.getChannelData(0)
+        for (let i = 0; i < c1.length; i++) {
+            // todo add interpolation
+            c1[i] = this.samples[Math.round((i % samplesPerCycle) / samplesPerCycle * this.sampleCount)]
+        }
+
+        if (!this.source) this.source = SoundManager.ctx.createBufferSource()
+        else this.source.stop()
+        this.source.buffer = this.audioBuffer
+        this.source.loop = true
+        this.source.connect(SoundManager.ctx.destination)
+        this.source.start()
+        this.isPlaying = true
+    }
+
+    release() {
+        if (this.isPlaying && this.source) this.source.stop()
+        this.isPlaying = false
+        this.source = null
+    }
 }
 
 export const defaultSoundWaves = [
