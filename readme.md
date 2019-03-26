@@ -7,6 +7,8 @@ aimed at creative exploration of *sound processing* and its *visual representati
 1. `npm install`
 1. `npm start`
 
+*Note: requires [Sass](https://sass-lang.com/install) to compile css*
+
 ### Description
 This is a [Typescript](https://www.typescriptlang.org/) web project that uses
 [Web Audio Api](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
