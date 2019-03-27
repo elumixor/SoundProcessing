@@ -1,6 +1,6 @@
 import {singleton} from "tsyringe"
 import {Overlay} from "../Overlay"
-import {AFrequency, defaultSoundWaves, hertz, SoundWave} from "../../../Sounds"
+import {defaultSoundWaves, SoundWave} from "../../../Sounds"
 import {clamp} from "../../../util"
 import {Input} from "../../../input/Input"
 
@@ -29,9 +29,10 @@ export class WaveEditor extends Overlay {
 
     private onWaveChange(e: MouseEvent) {
         if (this.mouseDown) {
-            this.wave.samples[
-                Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
+            const samples = [...this.wave.samples]
+            samples[Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
                     * this.wave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
+            this.wave = new SoundWave(samples, this.wave.envelope)
             this.repaintWave()
         }
     }
@@ -56,10 +57,9 @@ export class WaveEditor extends Overlay {
 
         this.input.onKeyPressed.subscribe(arg => {
             this.wave.release()
-
-            this.wave.play(hertz(arg.key))
+            console.log(arg.key);
+            this.wave.play(arg.key)
         })
-
 
         this.input.onKeyReleased.subscribe(arg => {
             this.wave.release()

@@ -55,6 +55,8 @@ export class SoundManager {
 export const AFrequency = 440
 export const AMidi = 69
 export const OctaveSemitones = 12
+export const LowestMidiNote = 21
+export const HighestMidiNote = 91
 
 export function hertz(midi: number) {
     return Math.pow(2, (midi - AMidi) / OctaveSemitones) * AFrequency
@@ -78,13 +80,13 @@ export class SoundEnvelope {
 
     static get default(): SoundEnvelope {
         return new SoundEnvelope(0,
-            0,
             1,
             1,
             1,
-            0,
+            .5,
             1,
-            0,
+            1,
+            1,
             1,
             2)
     }
@@ -94,52 +96,84 @@ export class SoundWave {
     static readonly samplesMax = 256
     sampleCount: number = SoundWave.samplesMax
 
-    private source: AudioBufferSourceNode | null
+    private source: AudioBufferSourceNode
     private readonly totalDuration: number
-    private audioBuffer: AudioBuffer
-    private readonly totalSamples: number
+    private readonly gainNode: GainNode
+    private readonly buffers: { [note: number]: AudioBuffer }
+    private readonly decayDuration: number
+    private readonly releaseDuration: number
+    private progressStep: { decay: number, release: number }
 
-    constructor(public readonly samples: number[], private envelope: SoundEnvelope) {
+    constructor(public readonly samples: number[], public readonly envelope: SoundEnvelope) {
         this.totalDuration = this.envelope.delay
             + this.envelope.attackDuration
             + this.envelope.decayDuration
             + this.envelope.sustain
             + this.envelope.release
 
-        let sampleRate = SoundManager.ctx.sampleRate
-        this.totalSamples = sampleRate * this.totalDuration
-        this.audioBuffer = SoundManager.ctx.createBuffer(1, this.totalSamples, sampleRate)
+        this.decayDuration = this.envelope.delay + this.envelope.attackDuration + this.envelope.decayDuration
+        this.releaseDuration = this.envelope.sustain + this.envelope.release
+
+        this.progressStep = {
+            decay: SoundWave.envelopeStepMs / this.decayDuration,
+            release: SoundWave.envelopeStepMs / this.releaseDuration
+        }
+
+        this.buffers = (() => {
+            const b: { [note: number]: AudioBuffer } = {}
+            for (let i = LowestMidiNote; i < HighestMidiNote; i++) {
+                const ab = SoundManager.ctx.createBuffer(1, this.sampleCount, this.sampleCount * hertz(i))
+
+                const c1 = ab.getChannelData(0)
+                for (let j = 0; j < c1.length; j++) c1[j] = this.samples[j]
+
+                b[i] = ab
+            }
+
+            return b
+        })()
+
         this.source = SoundManager.ctx.createBufferSource()
+        this.gainNode = SoundManager.ctx.createGain()
+        this.gainNode.gain.setValueAtTime(0.1, 0)
     }
 
     private isPlaying = false
 
-    play(freq: number) {
+    private static readonly envelopeStepMs = 10
+
+    private interval = 0
+    private progress = 0
+
+    play(note: number) {
+        console.log("playni");
+
         SoundManager.ctx.resume()
-
-        const totalCycles = this.totalDuration * freq
-        const samplesPerCycle = this.totalSamples / totalCycles
-        this.audioBuffer = SoundManager.ctx.createBuffer(1, this.totalSamples, SoundManager.ctx.sampleRate)
-
-        const c1 = this.audioBuffer.getChannelData(0)
-        for (let i = 0; i < c1.length; i++) {
-            // todo add interpolation
-            c1[i] = this.samples[Math.round((i % samplesPerCycle) / samplesPerCycle * this.sampleCount)]
-        }
-
-        if (!this.source) this.source = SoundManager.ctx.createBufferSource()
-        else this.source.stop()
-        this.source.buffer = this.audioBuffer
+        this.source = SoundManager.ctx.createBufferSource()
+        this.source.buffer = this.buffers[note]
         this.source.loop = true
-        this.source.connect(SoundManager.ctx.destination)
+
+        this.gainNode.gain.setValueAtTime(0.1, 0)
+
+        this.gainNode.gain.cancelScheduledValues(0)
+        this.gainNode.gain.setValueCurveAtTime([0, this.envelope.attackValue],
+            this.envelope.delay, this.envelope.attackDuration)
+        this.gainNode.gain.setValueCurveAtTime([this.envelope.attackValue, this.envelope.decayValue],
+            this.envelope.delay + this.envelope.attackDuration, this.envelope.decayDuration)
+
+        this.source.connect(this.gainNode)
+        this.gainNode.connect(SoundManager.ctx.destination)
         this.source.start()
         this.isPlaying = true
     }
 
     release() {
+        console.log("release");
         if (this.isPlaying && this.source) this.source.stop()
         this.isPlaying = false
-        this.source = null
+
+        //this.gainNode.gain.cancelScheduledValues(0)
+        //this.gainNode.gain.setValueCurveAtTime([this.gainNode.gain.value, 0], 0, this.envelope.release)
     }
 }
 

@@ -25,7 +25,9 @@ export class Input {
         const note = message.data[1]
         const velocity = (message.data.length > 2) ? message.data[2] : 0
 
+
         if (note) {
+                console.log(note);
             if (command !== 176) {
                 if (velocity > 0) this.onKeyPressed.emit(new KeyPressedEvent(this.settings.midi2Midi[note], velocity))
                 else this.onKeyReleased.emit(this.settings.midi2Midi[note])
