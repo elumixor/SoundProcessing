@@ -105,12 +105,13 @@ todo description implementation
 - [x] Application view - rings, mf
 - [x] Play from MIDI keyboard
 - [x] Play from computer keyboard
-- [ ] Keyboard mapping
+- [x] Keyboard mapping
     - [x] Overlay window, icon click handling + animations
-    - [ ] Digital keyboard keys
-    - [ ] Piano keyboard dialog window, close, open, switch windows
-    - [ ] Digital piano, buttons, scrolling, animations
-    - [ ] Mapping key to piano
+    - [x] Digital keyboard keys
+    - [x] Piano keyboard dialog window, close, open, switch windows
+    - [x] Digital piano, buttons, scrolling
+    - [x] Mapping key to piano
+    - [ ] Animations
 - [ ] Playing patterns
 - [x] Travelling sound to the resolution ring
 - [x] Basic animations
