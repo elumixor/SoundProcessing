@@ -11,8 +11,17 @@
   bottom: 52.5%
 }
 
-#envBox {
+#envBoxContainer {
   top: 52.5%;
+}
+
+#totalDurationLabel {
+  color: white;
+  width: 100%;
+  text-align: center;
+  display: inline-block;
+  bottom: 12.5%;
+  position: absolute;
 }
 
 .wave-sample {

@@ -89,14 +89,14 @@ export class SoundEnvelope {
 
     static get default(): SoundEnvelope {
         return new SoundEnvelope(0,
-            1,
+            .1,
             1,
             1,
             1,
             .5,
             1,
-            0,
             1,
+            .3,
             2)
     }
 }
@@ -191,7 +191,6 @@ export let envelope = SoundEnvelope.default
 export function setWave(wave: SampledWave) {
     soundWave = wave
 }
-
 export function setEnvelope(env: SoundEnvelope) {
     envelope = env
 }

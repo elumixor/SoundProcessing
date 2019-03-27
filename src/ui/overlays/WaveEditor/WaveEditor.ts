@@ -3,12 +3,14 @@ import {Overlay} from "../Overlay"
 import {setWave, soundWave, SampledWave, envelope, setEnvelope, SoundEnvelope} from "../../../Sound"
 import {clamp} from "../../../util"
 import {Settings} from "../../../Settings"
+import {Point} from "../../../common/Point"
 
 @singleton()
 export class WaveEditor extends Overlay {
     waveBox: HTMLDivElement | null = null
     envBox: HTMLCanvasElement | null = null
     totalDuration: HTMLInputElement | null = null
+    dc: CanvasRenderingContext2D | null = null
 
     shown: HTMLDivElement[] | null = null
 
@@ -26,45 +28,149 @@ export class WaveEditor extends Overlay {
 
     private mouseDown = false
     private totalSamples: number | null = null
+    private envContainer: HTMLDivElement | null = null
 
     private onWaveChange(e: MouseEvent) {
-        if (this.mouseDown) {
-            const samples = [...soundWave.samples]
-            samples[Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
-                * soundWave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
-            setWave(new SampledWave(samples))
-            this.repaintWave()
+        const samples = [...soundWave.samples]
+        samples[Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
+            * soundWave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
+        setWave(new SampledWave(samples))
+        this.repaintWave()
+    }
+
+    private static envPercentages(): { delay: number, attack: number, decay: number, sustain: number, release: number } {
+        return {
+            delay: envelope.delay / envelope.totalDuration,
+            attack: envelope.attackDuration / envelope.totalDuration,
+            decay: envelope.decayDuration / envelope.totalDuration,
+            sustain: envelope.sustain / envelope.totalDuration,
+            release: envelope.release / envelope.totalDuration
         }
     }
 
-    recalculateEnvelope(totalDuration: number) {
+    private static recalculateEnvelope(totalDuration: number) {
         if (!(totalDuration > .1)) return
-        const newDuration = totalDuration / envelope.totalDuration
+        const e = this.envPercentages()
 
-        const delay = envelope.delay * newDuration
-        const attack = envelope.attackDuration * newDuration
-        const decay = envelope.decayDuration * newDuration
-        const sustain = envelope.sustain * newDuration
-        const release = envelope.release * newDuration
-
-        setEnvelope(new SoundEnvelope(delay,
-            attack, envelope.attackValue, envelope.attackConvexity,
-            decay, envelope.decayValue, envelope.decayConvexity,
-            sustain, release, envelope.releaseConvexity))
+        setEnvelope(new SoundEnvelope(e.delay * totalDuration,
+            e.attack * totalDuration, envelope.attackValue, envelope.attackConvexity,
+            e.decay * totalDuration, envelope.decayValue, envelope.decayConvexity,
+            e.sustain * totalDuration, e.release * totalDuration, envelope.releaseConvexity))
     }
 
-    constructor(private settings: Settings) {
+    private drawEnvelope() {
+        const dc = this.dc as CanvasRenderingContext2D
+        const e = WaveEditor.envPercentages()
+
+        dc.clearRect(0, 0, this.dc!.canvas.width, this.dc!.canvas.height)
+
+        dc.lineWidth = 2
+        dc.moveTo(0, dc.canvas.height)
+
+        dc.beginPath()
+        dc.lineTo(e.delay * dc.canvas.width, dc.canvas.height)
+        dc.lineTo((e.delay + e.attack) * dc.canvas.width, (1 - envelope.attackValue) * dc.canvas.height)
+        dc.lineTo((e.delay + e.attack + e.decay) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height)
+        dc.lineTo((e.delay + e.attack + e.decay + e.sustain) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height)
+        dc.lineTo(dc.canvas.width, dc.canvas.height)
+        dc.closePath()
+
+        dc.fillStyle = "green"
+        dc.fill()
+    }
+
+    private envelopeSelected: { name: string, min: number, max: number } | null = null
+
+    private onEnvDrag(e: MouseEvent) {
+        const newX = e.x - this.envContainer!.offsetLeft
+        const newY = e.y - this.envContainer!.offsetTop
+
+        if (newX > this.envelopeSelected!.min && newX < this.envelopeSelected!.max) {
+            const value = 1 - newY / this.dc!.canvas.height
+            const time = newX / this.dc!.canvas.width
+
+            let {
+                delay, attackDuration, attackValue, attackConvexity,
+                decayDuration, decayValue, decayConvexity, sustain, release, releaseConvexity
+            } = envelope
+
+            switch (this.envelopeSelected!.name) {
+                case "delay":
+                    delay = time
+                    break
+                case "attack":
+                    attackDuration = time - delay
+                    attackValue = value
+                    break
+                case "decay":
+                    decayDuration = time - delay - attackDuration
+                    decayValue = value
+                    break
+                case "sustain":
+                    sustain = time - delay - attackDuration - decayDuration
+                    break
+                case "release":
+                    release = time - delay - attackDuration - decayDuration - sustain
+                    break
+                default:
+                    break
+            }
+
+            setEnvelope(new SoundEnvelope(delay, attackDuration, attackValue, attackConvexity, decayDuration, decayValue, decayConvexity, sustain, release, releaseConvexity))
+        }
+
+        this.drawEnvelope()
+    }
+
+    private onEnvSelect(e: MouseEvent) {
+        const dc = this.dc as CanvasRenderingContext2D
+        const clickPoint = new Point(e.x - this.envContainer!.offsetLeft, e.y - this.envContainer!.offsetTop)
+        const env = WaveEditor.envPercentages()
+        const envPoints = [
+            new Point(env.delay * dc.canvas.width, dc.canvas.height),
+            new Point((env.delay + env.attack) * dc.canvas.width, (1 - envelope.attackValue) * dc.canvas.height),
+            new Point((env.delay + env.attack + env.decay) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height),
+            new Point((env.delay + env.attack + env.decay + env.sustain) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height),
+            new Point(dc.canvas.width, dc.canvas.height)
+        ]
+
+        const labels = ["delay", "attack", "decay", "sustain", "release"]
+
+        let minPoint = 0
+        let minDistance = envPoints[minPoint].distanceTo(clickPoint)
+        for (let i = 1; i < envPoints.length; i++) {
+            let newDistance = envPoints[i].distanceTo(clickPoint)
+            if (newDistance < minDistance) {
+                minDistance = newDistance
+                minPoint = i
+            }
+        }
+        this.envelopeSelected = {
+            name: labels[minPoint],
+            min: minPoint === 0 ? 0 : envPoints[minPoint - 1].x,
+            max: minPoint === envPoints.length - 1 ? dc.canvas.width : envPoints[minPoint + 1].x
+        }
+    }
+
+    constructor() {
         super("./src/ui/overlays/WaveEditor/WaveEditor.html", () => {
             this.waveBox = document.getElementById("waveBox") as HTMLDivElement
+            this.envContainer = document.getElementById("envBoxContainer") as HTMLDivElement
             this.envBox = document.getElementById("envBox") as HTMLCanvasElement
+            this.envBox.width = innerWidth * .7
+            this.envBox.height = innerHeight * .3
+
             this.totalDuration = document.getElementById("totalDuration") as HTMLInputElement
+
+            this.dc = this.envBox.getContext("2d")
+            this.drawEnvelope()
 
             this.totalDuration.value = envelope.totalDuration.toString()
             this.totalDuration.addEventListener("input", () => {
-                this.recalculateEnvelope(Number(this.totalDuration!.value))
+                WaveEditor.recalculateEnvelope(Number(this.totalDuration!.value))
             })
 
-            this.waveBox!.addEventListener("mousedown", (e) => {
+            this.waveBox!.addEventListener("mousedown", e => {
                 this.mouseDown = true
                 this.onWaveChange(e)
             })
@@ -74,7 +180,20 @@ export class WaveEditor extends Overlay {
             this.waveBox!.addEventListener("mouseleave", () => {
                 //this.mouseDown = false
             })
-            this.waveBox!.addEventListener("mousemove", (e) => { this.onWaveChange(e) })
+            this.waveBox!.addEventListener("mousemove", e => { if (this.mouseDown) this.onWaveChange(e) })
+
+            this.envBox!.addEventListener("mousedown", (e) => {
+                this.mouseDown = true
+                this.onEnvSelect(e)
+                this.onEnvDrag(e)
+            })
+            this.envBox!.addEventListener("mouseup", () => {
+                this.mouseDown = false
+            })
+            this.envBox!.addEventListener("mouseleave", () => {
+                //this.mouseDown = false
+            })
+            this.envBox!.addEventListener("mousemove", e => { if (this.mouseDown) this.onEnvDrag(e) })
         })
     }
 
