@@ -1,0 +1,40 @@
+#midiContainer {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  white-space: nowrap;
+  position: absolute;
+  top: 35vh;
+  height: 30vh;
+  width: 90vw;
+  left: 5vw;
+}
+
+.midiKey {
+  position: relative;
+  display: inline-flex;
+  height: 30vh;
+  width: 50px;
+  vertical-align: top;
+  text-align: center;
+
+  &.black {
+    background-color: black;
+    color: rgb(195, 195, 195);
+    height: 20vh !important;
+    margin: 0 -25.5px 0 -25.5px;
+    z-index: 10;
+  }
+
+  &.white {
+    background-color: rgb(195, 195, 195);
+    color: black;
+    z-index: 1;
+    margin: 0 1px 0 1px;
+  }
+}
+
+.midiKey span {
+  align-self: flex-end;
+  width: 100%;
+  padding-bottom: .5em;
+}

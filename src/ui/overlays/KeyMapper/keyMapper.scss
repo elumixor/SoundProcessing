@@ -1,0 +1,22 @@
+.keyButton {
+  display: inline-block;
+  border: .5px solid rgba(255, 255, 255, 0.76);
+  border-radius: .5em;
+  width: 1.5em;
+  height: 1.5em;
+  color: rgba(255, 255, 255, 0.76);
+  padding: .5em;
+  margin: .1em;
+  text-align: center;
+  line-height: 1.5em;
+  cursor: pointer;
+
+  &:hover {
+    border: .5px solid white;
+    color: white;
+  }
+}
+
+.buttonsRow {
+  text-align: center;
+}

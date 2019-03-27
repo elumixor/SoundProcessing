@@ -106,7 +106,7 @@ todo description implementation
 - [x] Play from MIDI keyboard
 - [x] Play from computer keyboard
 - [ ] Keyboard mapping
-    - [ ] Overlay window, icon click handling + animations
+    - [x] Overlay window, icon click handling + animations
     - [ ] Digital keyboard keys
     - [ ] Piano keyboard dialog window, close, open, switch windows
     - [ ] Digital piano, buttons, scrolling, animations
@@ -131,6 +131,8 @@ todo description implementation
 - [ ] Quantization
 - [ ] Visual effects
 - [ ] Custom sound waves
+    - [x] Modifying standard sine wave
+    - [ ] Envelope
     - [ ] Standard waves
 - [ ] Custom sound upload
 - [ ] Features

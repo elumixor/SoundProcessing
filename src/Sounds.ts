@@ -18,6 +18,7 @@ export class Sound {
     constructor(public key: number, public velocity: number) {
         this.sector = Sound.settings.getSector(key)
         this.move()
+        soundWave.at(key).play()
     }
 
     move(): void {
@@ -92,19 +93,15 @@ export class SoundEnvelope {
     }
 }
 
-export class SoundWave {
-    static readonly samplesMax = 256
-    sampleCount: number = SoundWave.samplesMax
-
-    private source: AudioBufferSourceNode
-    private readonly totalDuration: number
+class PlayableWave {
     private readonly gainNode: GainNode
-    private readonly buffers: { [note: number]: AudioBuffer }
+    private readonly totalDuration: number
     private readonly decayDuration: number
     private readonly releaseDuration: number
-    private progressStep: { decay: number, release: number }
 
-    constructor(public readonly samples: number[], public readonly envelope: SoundEnvelope) {
+    constructor(private readonly source: AudioBufferSourceNode, private readonly envelope: SoundEnvelope) {
+        this.gainNode = SoundManager.ctx.createGain()
+
         this.totalDuration = this.envelope.delay
             + this.envelope.attackDuration
             + this.envelope.decayDuration
@@ -113,11 +110,44 @@ export class SoundWave {
 
         this.decayDuration = this.envelope.delay + this.envelope.attackDuration + this.envelope.decayDuration
         this.releaseDuration = this.envelope.sustain + this.envelope.release
+    }
 
-        this.progressStep = {
-            decay: SoundWave.envelopeStepMs / this.decayDuration,
-            release: SoundWave.envelopeStepMs / this.releaseDuration
-        }
+    play() {
+        this.gainNode.gain.cancelScheduledValues(0)
+        this.gainNode.gain.setValueAtTime(SoundManager.ctx.currentTime, 0)
+
+        this.gainNode.gain.setValueCurveAtTime([0, this.envelope.attackValue],
+            SoundManager.ctx.currentTime + this.envelope.delay,
+            this.envelope.attackDuration)
+
+        this.gainNode.gain.setValueCurveAtTime([this.envelope.attackValue, this.envelope.decayValue],
+            SoundManager.ctx.currentTime + this.envelope.delay + this.envelope.attackDuration,
+            this.envelope.decayDuration)
+
+        this.gainNode.gain.setValueCurveAtTime([this.envelope.decayValue, 0],
+            SoundManager.ctx.currentTime + this.envelope.delay + this.envelope.attackDuration
+            + this.envelope.decayDuration + this.envelope.sustain,
+            this.envelope.release)
+
+        this.source.connect(this.gainNode)
+        this.gainNode.connect(SoundManager.ctx.destination)
+        this.source.start()
+
+        setTimeout(() => {
+            this.gainNode.disconnect()
+            this.source.disconnect()
+            this.source.stop(0)
+        },(this.envelope.delay + this.envelope.attackDuration
+            + this.envelope.decayDuration + this.envelope.sustain + this.envelope.release) * 1000)
+    }
+}
+
+export class SampledWave {
+    static readonly samplesMax = 256
+    sampleCount: number = SampledWave.samplesMax
+    private readonly buffers: { [note: number]: AudioBuffer }
+
+    constructor(public readonly samples: number[]) {
 
         this.buffers = (() => {
             const b: { [note: number]: AudioBuffer } = {}
@@ -132,60 +162,26 @@ export class SoundWave {
 
             return b
         })()
-
-        this.source = SoundManager.ctx.createBufferSource()
-        this.gainNode = SoundManager.ctx.createGain()
-        this.gainNode.gain.setValueAtTime(0.1, 0)
     }
 
-    private isPlaying = false
+    at(note: number): PlayableWave {
+        const src = SoundManager.ctx.createBufferSource()
+        src.buffer = this.buffers[note]
+        src.loop = true
 
-    private static readonly envelopeStepMs = 10
-
-    private interval = 0
-    private progress = 0
-
-    play(note: number) {
-        console.log("playni");
-
-        SoundManager.ctx.resume()
-        this.source = SoundManager.ctx.createBufferSource()
-        this.source.buffer = this.buffers[note]
-        this.source.loop = true
-
-        this.gainNode.gain.setValueAtTime(0.1, 0)
-
-        this.gainNode.gain.cancelScheduledValues(0)
-        this.gainNode.gain.setValueCurveAtTime([0, this.envelope.attackValue],
-            this.envelope.delay, this.envelope.attackDuration)
-        this.gainNode.gain.setValueCurveAtTime([this.envelope.attackValue, this.envelope.decayValue],
-            this.envelope.delay + this.envelope.attackDuration, this.envelope.decayDuration)
-
-        this.source.connect(this.gainNode)
-        this.gainNode.connect(SoundManager.ctx.destination)
-        this.source.start()
-        this.isPlaying = true
-    }
-
-    release() {
-        console.log("release");
-        if (this.isPlaying && this.source) this.source.stop()
-        this.isPlaying = false
-
-        //this.gainNode.gain.cancelScheduledValues(0)
-        //this.gainNode.gain.setValueCurveAtTime([this.gainNode.gain.value, 0], 0, this.envelope.release)
+        return new PlayableWave(src, SoundEnvelope.default)
     }
 }
 
 export const defaultSoundWaves = [
     // Sine wave
-    new SoundWave((() => {
+    new SampledWave((() => {
         const arr: number[] = []
-        for (let i = 0; i < SoundWave.samplesMax; i++) {
-            arr.push(Math.sin(i / SoundWave.samplesMax * 2 * Math.PI))
+        for (let i = 0; i < SampledWave.samplesMax; i++) {
+            arr.push(Math.sin(i / SampledWave.samplesMax * 2 * Math.PI))
         }
         return arr
-    })(), SoundEnvelope.default)
+    })())
 
     // Square
 
@@ -197,3 +193,9 @@ export const defaultSoundWaves = [
 
     // Custom preset
 ]
+
+export let soundWave = defaultSoundWaves[0]
+
+export function setWave(wave: SampledWave) {
+    soundWave = wave
+}

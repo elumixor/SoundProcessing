@@ -18,16 +18,13 @@ export class Input {
     /** Velocity on pressing keyboard */
     private static keyboardVelocity: number = 90
 
-
     /** Midi interaction */
     private readonly onMidiMessage = (message: any) => {
         const command = message.data[0]
         const note = message.data[1]
         const velocity = (message.data.length > 2) ? message.data[2] : 0
 
-
         if (note) {
-                console.log(note);
             if (command !== 176) {
                 if (velocity > 0) this.onKeyPressed.emit(new KeyPressedEvent(this.settings.midi2Midi[note], velocity))
                 else this.onKeyReleased.emit(this.settings.midi2Midi[note])
@@ -46,12 +43,12 @@ export class Input {
                 .forEach((x: any) => x.onmidimessage = this.onMidiMessage))
 
         // Keyboard interaction
-        window.addEventListener("keydown", e => {
+        addEventListener("keydown", e => {
             const k = this.settings.key2Midi[e.key]
             if (k)
                 this.onKeyPressed.emit(new KeyPressedEvent(k, Input.keyboardVelocity))
         })
-        window.addEventListener("keyup", e => {
+        addEventListener("keyup", e => {
             const k = this.settings.key2Midi[e.key]
             if (k)
                 this.onKeyReleased.emit(k)

@@ -27,4 +27,5 @@ dc.draw = () => {
 }
 
 dc.init()
-ui.overlays.waveEditor.initialized.subscribe(it => (it as Overlay).show()) // todo remove later
+//ui.overlays.waveEditor.initialized.subscribe(it => (it as Overlay).show()) // todo remove later
+ui.overlays.keyMapper.initialized.subscribe(() => ui.showOverlay(ui.overlays.keyMapper)) // todo remove later

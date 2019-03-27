@@ -1,12 +1,11 @@
 import {singleton} from "tsyringe"
 import {Overlay} from "../Overlay"
-import {defaultSoundWaves, SoundWave} from "../../../Sounds"
+import {setWave, soundWave, SampledWave} from "../../../Sounds"
 import {clamp} from "../../../util"
-import {Input} from "../../../input/Input"
+import {Settings} from "../../../Settings"
 
 @singleton()
 export class WaveEditor extends Overlay {
-    wave: SoundWave = defaultSoundWaves[0]
     waveBox: HTMLDivElement | null = null
     envBox: HTMLDivElement | null = null
 
@@ -15,7 +14,7 @@ export class WaveEditor extends Overlay {
     static readonly ampBoxes = (() => {
         const arr: HTMLDivElement[] = []
 
-        for (let i = 0; i < SoundWave.samplesMax; i++) {
+        for (let i = 0; i < SampledWave.samplesMax; i++) {
             const el = document.createElement("div")
             el.className = "wave-sample"
             arr.push(el)
@@ -29,15 +28,15 @@ export class WaveEditor extends Overlay {
 
     private onWaveChange(e: MouseEvent) {
         if (this.mouseDown) {
-            const samples = [...this.wave.samples]
+            const samples = [...soundWave.samples]
             samples[Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
-                    * this.wave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
-            this.wave = new SoundWave(samples, this.wave.envelope)
+                    * soundWave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
+            setWave(new SampledWave(samples))
             this.repaintWave()
         }
     }
 
-    constructor(private input: Input) {
+    constructor(private settings: Settings) {
         super("./src/ui/overlays/WaveEditor/WaveEditor.html", () => {
             this.waveBox = document.getElementById("waveBox") as HTMLDivElement
             this.envBox = document.getElementById("envBox") as HTMLDivElement
@@ -54,16 +53,6 @@ export class WaveEditor extends Overlay {
             })
             this.waveBox!.addEventListener("mousemove", (e) => { this.onWaveChange(e) })
         })
-
-        this.input.onKeyPressed.subscribe(arg => {
-            this.wave.release()
-            console.log(arg.key);
-            this.wave.play(arg.key)
-        })
-
-        this.input.onKeyReleased.subscribe(arg => {
-            this.wave.release()
-        })
     }
 
     repaintWave() {
@@ -76,10 +65,9 @@ export class WaveEditor extends Overlay {
                 this.shown[i].style.width = sampleWidth + "px"
                 this.shown[i].style.left = (boxWidth / 2 + (i - this.totalSamples / 2) * sampleWidth) + "px"
 
-                const sampleHeight = this.wave.samples[i] / 2 * boxHeight
+                const sampleHeight = soundWave.samples[i] / 2 * boxHeight
 
                 if (sampleHeight > 0) {
-                    //noinspection JSSuspiciousNameCombination
                     this.shown[i].style.top = (boxHeight / 2 - sampleHeight) + "px"
                     this.shown[i].style.bottom = (boxHeight / 2) + "px"
                 } else {
@@ -91,15 +79,11 @@ export class WaveEditor extends Overlay {
     }
 
     show() {
-        this.totalSamples = this.wave.sampleCount
+        this.totalSamples = soundWave.sampleCount
         this.shown = WaveEditor.ampBoxes.slice(0, this.totalSamples)
         this.repaintWave()
 
         this.waveBox!.append(...this.shown)
         super.show()
-    }
-
-    setWave(wave: SoundWave) {
-        this.wave = wave
     }
 }

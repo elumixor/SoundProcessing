@@ -1,5 +1,8 @@
-@import 'overlay.scss';
-@import 'waveEditor';
+@import "icons";
+@import '../src/ui/overlays/overlay';
+@import '../src/ui/overlays/KeyMapper/keyMapper';
+@import '../src/ui/overlays/KeyMapper/MidiMapper/midiMapper';
+@import '../src/ui/overlays/WaveEditor/waveEditor';
 
 * {
     margin: 0;
@@ -21,8 +24,8 @@ body, html {
     width: 2em;
     height: 2em;
     background-size: cover;
-    padding: 1em;
-    position: absolute;
+    margin: 1em;
+    position: relative;
 }
 
 .e-io {
@@ -51,8 +54,17 @@ body, html {
     position: absolute;
 }
 
-#waveEditor {
-    background-image: url('../assets/images/waveEditor.png');
+
+.centered {
+    display: table;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+
+    > * {
+        display: table-cell;
+        vertical-align: middle;
+    }
 }
-
-

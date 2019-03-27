@@ -9,6 +9,8 @@
   "author": "elumixor",
   "license": "ISC",
   "devDependencies": {
+    "@types/bluebird": "^3.5.26",
+    "@types/core-js": "^0.9.36",
     "ts-loader": "^5.3.3",
     "typescript": "^3.3.3333",
     "webpack": "^4.29.6",

@@ -2,7 +2,21 @@ import {singleton} from "tsyringe"
 
 @singleton()
 export class Settings {
-    private _key2Midi: { [key: string]: number } = {}
+    private _key2Midi: { [key: string]: number } = {
+        "a": 48,
+        "w": 49,
+        "s": 50,
+        "e": 51,
+        "d": 52,
+        "f": 53,
+        "t": 54,
+        "g": 55,
+        "y": 56,
+        "h": 57,
+        "u": 58,
+        "j": 59,
+        "k": 60,
+    }
     private _midi2Midi: { [key: number]: number } = {}
 
     /** Keyboard mappings */
