@@ -87,7 +87,7 @@ export class SoundEnvelope {
             .5,
             1,
             1,
-            1,
+            0,
             1,
             2)
     }
@@ -145,28 +145,21 @@ class PlayableWave {
 export class SampledWave {
     static readonly samplesMax = 256
     sampleCount: number = SampledWave.samplesMax
-    private readonly buffers: { [note: number]: AudioBuffer }
+    private readonly buffer: AudioBuffer
 
     constructor(public readonly samples: number[]) {
 
-        this.buffers = (() => {
-            const b: { [note: number]: AudioBuffer } = {}
-            for (let i = LowestMidiNote; i < HighestMidiNote; i++) {
-                const ab = SoundManager.ctx.createBuffer(1, this.sampleCount, this.sampleCount * hertz(i))
-
-                const c1 = ab.getChannelData(0)
-                for (let j = 0; j < c1.length; j++) c1[j] = this.samples[j]
-
-                b[i] = ab
-            }
-
-            return b
-        })()
+        this.buffer = SoundManager.ctx.createBuffer(1, this.sampleCount, this.sampleCount * hertz(LowestMidiNote))
+        const c1 = this.buffer.getChannelData(0)
+        for (let j = 0; j < c1.length; j++) c1[j] = this.samples[j]
     }
 
     at(note: number): PlayableWave {
         const src = SoundManager.ctx.createBufferSource()
-        src.buffer = this.buffers[note]
+        src.buffer = this.buffer
+        src.detune.value = (note - LowestMidiNote) * 100
+        console.log(src.detune.value);
+
         src.loop = true
 
         return new PlayableWave(src, SoundEnvelope.default)
