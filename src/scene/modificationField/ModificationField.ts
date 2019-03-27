@@ -3,7 +3,7 @@ import {Renderable} from "../../common/Renderable"
 import {DrawingContext} from "../../DrawingContext"
 import {Segment} from "./Segment"
 import {Settings} from "../../Settings"
-import {Sound} from "../../Sounds"
+import {Sound} from "../../Sound"
 
 @singleton()
 export class ModificationField implements Renderable {

@@ -2,7 +2,7 @@ import "reflect-metadata"
 import {container} from "tsyringe"
 import {DrawingContext} from "./DrawingContext"
 import {Scene} from "./scene/Scene"
-import {SoundManager} from "./Sounds"
+import {SoundManager} from "./Sound"
 import {UI} from "./ui/UI"
 import {Overlay} from "./ui/overlays/Overlay"
 
@@ -27,5 +27,4 @@ dc.draw = () => {
 }
 
 dc.init()
-//ui.overlays.waveEditor.initialized.subscribe(it => (it as Overlay).show()) // todo remove later
-ui.overlays.keyMapper.initialized.subscribe(() => ui.showOverlay(ui.overlays.keyMapper)) // todo remove later
+ui.overlays.keyMapper.initialized.subscribe(() => ui.showOverlay(ui.overlays.waveEditor)) // todo remove later

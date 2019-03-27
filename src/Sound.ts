@@ -68,24 +68,32 @@ export function midi(hertz: number) {
 }
 
 export class SoundEnvelope {
-    constructor(public delay: number,
-                public attackDuration: number,
-                public attackValue: number,
-                public attackConvexity: number,
-                public decayValue: number,
-                public decayDuration: number,
-                public decayConvexity: number,
-                public sustain: number,
-                public release: number,
-                public releaseConvexity: number) {}
+    readonly totalDuration: number
+    readonly totalDecay: number
+    readonly totalRelease: number
+
+    constructor(public readonly delay: number,
+                public readonly attackDuration: number,
+                public readonly attackValue: number,
+                public readonly attackConvexity: number,
+                public readonly decayDuration: number,
+                public readonly decayValue: number,
+                public readonly decayConvexity: number,
+                public readonly sustain: number,
+                public readonly release: number,
+                public readonly releaseConvexity: number) {
+        this.totalDuration = this.delay + this.attackDuration + this.decayDuration + this.sustain + this.release
+        this.totalDecay = this.delay + this.attackDuration + this.decayDuration
+        this.totalRelease = this.sustain + this.release
+    }
 
     static get default(): SoundEnvelope {
         return new SoundEnvelope(0,
             1,
             1,
             1,
-            .5,
             1,
+            .5,
             1,
             0,
             1,
@@ -95,24 +103,14 @@ export class SoundEnvelope {
 
 class PlayableWave {
     private readonly gainNode: GainNode
-    private readonly totalDuration: number
-    private readonly decayDuration: number
-    private readonly releaseDuration: number
 
     constructor(private readonly source: AudioBufferSourceNode, private readonly envelope: SoundEnvelope) {
         this.gainNode = SoundManager.ctx.createGain()
-
-        this.totalDuration = this.envelope.delay
-            + this.envelope.attackDuration
-            + this.envelope.decayDuration
-            + this.envelope.sustain
-            + this.envelope.release
-
-        this.decayDuration = this.envelope.delay + this.envelope.attackDuration + this.envelope.decayDuration
-        this.releaseDuration = this.envelope.sustain + this.envelope.release
     }
 
     play() {
+        console.log(this.envelope);
+
         this.gainNode.gain.cancelScheduledValues(0)
         this.gainNode.gain.setValueAtTime(SoundManager.ctx.currentTime, 0)
 
@@ -137,7 +135,7 @@ class PlayableWave {
             this.gainNode.disconnect()
             this.source.disconnect()
             this.source.stop(0)
-        },(this.envelope.delay + this.envelope.attackDuration
+        }, (this.envelope.delay + this.envelope.attackDuration
             + this.envelope.decayDuration + this.envelope.sustain + this.envelope.release) * 1000)
     }
 }
@@ -158,37 +156,42 @@ export class SampledWave {
         const src = SoundManager.ctx.createBufferSource()
         src.buffer = this.buffer
         src.detune.value = (note - LowestMidiNote) * 100
-        console.log(src.detune.value);
+        console.log(src.detune.value)
 
         src.loop = true
 
-        return new PlayableWave(src, SoundEnvelope.default)
+        return new PlayableWave(src, envelope)
     }
+
+    static readonly defaultWaves = [
+        // Sine wave
+        new SampledWave((() => {
+            const arr: number[] = []
+            for (let i = 0; i < SampledWave.samplesMax; i++) {
+                arr.push(Math.sin(i / SampledWave.samplesMax * 2 * Math.PI))
+            }
+            return arr
+        })())
+
+        // Square
+
+        // Saw
+
+        // Cut sine
+
+        // Noise
+
+        // Custom preset
+    ]
 }
 
-export const defaultSoundWaves = [
-    // Sine wave
-    new SampledWave((() => {
-        const arr: number[] = []
-        for (let i = 0; i < SampledWave.samplesMax; i++) {
-            arr.push(Math.sin(i / SampledWave.samplesMax * 2 * Math.PI))
-        }
-        return arr
-    })())
-
-    // Square
-
-    // Saw
-
-    // Cut sine
-
-    // Noise
-
-    // Custom preset
-]
-
-export let soundWave = defaultSoundWaves[0]
+export let soundWave = SampledWave.defaultWaves[0]
+export let envelope = SoundEnvelope.default
 
 export function setWave(wave: SampledWave) {
     soundWave = wave
+}
+
+export function setEnvelope(env: SoundEnvelope) {
+    envelope = env
 }

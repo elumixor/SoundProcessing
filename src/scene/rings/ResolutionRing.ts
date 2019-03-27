@@ -3,7 +3,7 @@ import {Renderable} from "../../common/Renderable"
 import {SegmentedRing} from "./SegmentedRing"
 import {DrawingContext} from "../../DrawingContext"
 import {Settings} from "../../Settings"
-import {Sound} from "../../Sounds"
+import {Sound} from "../../Sound"
 import anime from "animejs"
 
 @singleton()

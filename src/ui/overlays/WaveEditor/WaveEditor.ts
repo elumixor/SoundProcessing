@@ -1,13 +1,14 @@
 import {singleton} from "tsyringe"
 import {Overlay} from "../Overlay"
-import {setWave, soundWave, SampledWave} from "../../../Sounds"
+import {setWave, soundWave, SampledWave, envelope, setEnvelope, SoundEnvelope} from "../../../Sound"
 import {clamp} from "../../../util"
 import {Settings} from "../../../Settings"
 
 @singleton()
 export class WaveEditor extends Overlay {
     waveBox: HTMLDivElement | null = null
-    envBox: HTMLDivElement | null = null
+    envBox: HTMLCanvasElement | null = null
+    totalDuration: HTMLInputElement | null = null
 
     shown: HTMLDivElement[] | null = null
 
@@ -30,16 +31,38 @@ export class WaveEditor extends Overlay {
         if (this.mouseDown) {
             const samples = [...soundWave.samples]
             samples[Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
-                    * soundWave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
+                * soundWave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
             setWave(new SampledWave(samples))
             this.repaintWave()
         }
     }
 
+    recalculateEnvelope(totalDuration: number) {
+        if (!(totalDuration > .1)) return
+        const newDuration = totalDuration / envelope.totalDuration
+
+        const delay = envelope.delay * newDuration
+        const attack = envelope.attackDuration * newDuration
+        const decay = envelope.decayDuration * newDuration
+        const sustain = envelope.sustain * newDuration
+        const release = envelope.release * newDuration
+
+        setEnvelope(new SoundEnvelope(delay,
+            attack, envelope.attackValue, envelope.attackConvexity,
+            decay, envelope.decayValue, envelope.decayConvexity,
+            sustain, release, envelope.releaseConvexity))
+    }
+
     constructor(private settings: Settings) {
         super("./src/ui/overlays/WaveEditor/WaveEditor.html", () => {
             this.waveBox = document.getElementById("waveBox") as HTMLDivElement
-            this.envBox = document.getElementById("envBox") as HTMLDivElement
+            this.envBox = document.getElementById("envBox") as HTMLCanvasElement
+            this.totalDuration = document.getElementById("totalDuration") as HTMLInputElement
+
+            this.totalDuration.value = envelope.totalDuration.toString()
+            this.totalDuration.addEventListener("input", () => {
+                this.recalculateEnvelope(Number(this.totalDuration!.value))
+            })
 
             this.waveBox!.addEventListener("mousedown", (e) => {
                 this.mouseDown = true
