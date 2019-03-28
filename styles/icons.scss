@@ -1,7 +1,26 @@
+.icon {
+  width: 2em;
+  height: 2em;
+  margin: 1em;
+  position: relative;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  &.icon-big {
+    width: 4em;
+    height: 4em;
+  }
+}
+
 #waveEditor {
   background-image: url('../assets/images/waveEditor.png');
 }
 
 #keyMapper {
   background-image: url('../assets/images/keyMapper.png');
+}
+
+#flangerEffect {
+  background-image: url('../assets/images/flangerEffect.png');
 }

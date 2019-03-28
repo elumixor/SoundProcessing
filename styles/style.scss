@@ -3,6 +3,8 @@
 @import '../src/ui/overlays/KeyMapper/keyMapper';
 @import '../src/ui/overlays/KeyMapper/MidiMapper/midiMapper';
 @import '../src/ui/overlays/WaveEditor/waveEditor';
+@import '../src/ui/popups/Effects/effects';
+@import '../src/ui/popups/popup';
 
 * {
     margin: 0;
@@ -18,14 +20,6 @@ body, html {
     height: 100%;
     width: 100%;
     overflow: hidden;
-}
-
-.icon {
-    width: 2em;
-    height: 2em;
-    background-size: cover;
-    margin: 1em;
-    position: relative;
 }
 
 .e-io {

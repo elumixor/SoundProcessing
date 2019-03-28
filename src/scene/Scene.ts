@@ -10,6 +10,7 @@ import {Point} from "../common/Point"
 import {Settings} from "../Settings"
 import {clamp} from "../util"
 import {Segment} from "./modificationField/Segment"
+import {UI} from "../ui/UI"
 
 @singleton()
 export class Scene implements Renderable {
@@ -21,7 +22,8 @@ export class Scene implements Renderable {
                 private keyRing: KeyboardRing,
                 private resRing: ResolutionRing,
                 private modField: ModificationField,
-                private settings: Settings) {
+                private settings: Settings,
+                private ui: UI) {
         dc.afterInit.subscribe(() => {
             this.center = new Point(dc.width / 2, dc.height / 2)
         })
@@ -43,8 +45,11 @@ export class Scene implements Renderable {
         dc.c.canvas.addEventListener("click", e => {
             if (this.inField) {
                 //this.hovered.
+                this.ui.showPopup(this.ui.popups.effects)
+                this.ui.popups.effects.onChosen.subscribe(effect => {
+                    console.log(effect);
+                })
             }
-            console.log(e)
         })
 
         // Rotate canvas
@@ -71,7 +76,6 @@ export class Scene implements Renderable {
 
     private onFieldEnter() {
         this.anim.pause()
-        console.log(this.rotated)
         let rotated = this.rotated
 
         anime({

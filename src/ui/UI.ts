@@ -3,6 +3,8 @@ import {WaveEditor} from "./overlays/WaveEditor/WaveEditor"
 import {Overlay} from "./overlays/Overlay"
 import {KeyMapper} from "./overlays/KeyMapper/KeyMapper"
 import {MidiMapper} from "./overlays/KeyMapper/MidiMapper/MidiMapper"
+import {Effects} from "./popups/Effects/Effects"
+import {Popup} from "./popups/Popup"
 
 @singleton()
 export class UI {
@@ -18,7 +20,12 @@ export class UI {
         midi: container.resolve(MidiMapper)
     }
 
+    readonly popups = {
+        effects: container.resolve(Effects)
+    }
+
     currentOverlay: Overlay | null = null
+    currentPopup: Popup | null = null
 
     showOverlay(overlay: Overlay) {
         if (this.currentOverlay) this.currentOverlay.hide()
@@ -36,5 +43,11 @@ export class UI {
                 this.currentOverlay = null
             }
         })
+    }
+
+    showPopup(popup: Popup) {
+        if (this.currentPopup) this.currentPopup.hide()
+        popup.show()
+        this.currentPopup = popup
     }
 }
