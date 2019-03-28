@@ -1,5 +1,5 @@
 export class Point {
-    constructor(public x: number, public y: number) {
+    constructor(public x: number = 0, public y: number = 0) {
     }
 
     distanceTo(another: Point) {
@@ -7,5 +7,9 @@ export class Point {
         const dy = this.y - another.y
 
         return Math.sqrt(dx * dx + dy * dy)
+    }
+
+    sub(another: Point) {
+        return new Point(this.x - another.x, this.y - another.y)
     }
 }

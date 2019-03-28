@@ -8,10 +8,10 @@ export class Segment implements Renderable {
     private static dc: DrawingContext = container.resolve(DrawingContext)
     private static settings: Settings = container.resolve(Settings)
 
-    constructor(public inDist: number, public outDist: number, private a1: number, private a2: number) {
-    }
+    constructor(public inDist: number, public outDist: number, private a1: number, private a2: number) {}
 
     private activated = false
+    public hovered = false
 
     private gradient = {
         r1: 0,
@@ -64,10 +64,18 @@ export class Segment implements Renderable {
         Segment.dc.c.beginPath()
         Segment.dc.c.arc(0, 0, this.inDist, this.a1, this.a2)
         Segment.dc.c.arc(0, 0, this.outDist, this.a2, this.a1, true)
-        Segment.dc.c.fill()
+        if (this.hovered) {
+            const fc = Segment.dc.c.fillStyle
+            Segment.dc.c.fillStyle = "green"
+            Segment.dc.c.fill()
+            Segment.dc.c.fillStyle = fc
+        } else
+            Segment.dc.c.fill()
         Segment.dc.c.closePath()
 
-        if (this.activated) {
+
+
+        if (!this.hovered && this.activated) {
             const fs = Segment.dc.c.fillStyle
             Segment.dc.c.fillStyle = this.gradient.get()
 

@@ -4,6 +4,7 @@ import {DrawingContext} from "../../DrawingContext"
 import {Segment} from "./Segment"
 import {Settings} from "../../Settings"
 import {Sound} from "../../Sound"
+import {Point} from "../../common/Point"
 
 @singleton()
 export class ModificationField implements Renderable {
@@ -46,8 +47,7 @@ export class ModificationField implements Renderable {
         })
     }
 
-    triggerSegment(sound: Sound) {
-        const segment = this.segments[sound.travelled][this.settings.getSector(sound.key)]
-        segment.activate()
+    getSegment(distance: number, sector: number): Segment | undefined {
+        return this.segments[distance][sector]
     }
 }

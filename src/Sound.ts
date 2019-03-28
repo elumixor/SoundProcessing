@@ -23,13 +23,16 @@ export class Sound {
 
     move(): void {
         if (this.travelled < Sound.settings.maxTravelDistance) {
-            Sound.mf.triggerSegment(this)
+            const segment = Sound.mf.getSegment(this.travelled, Sound.settings.getSector(this.key))
+            if (segment)
+                segment.activate()
             this._travelled++
 
             setTimeout(() => {
                 this.move()
             }, Sound.settings.travelTime)
         } else {
+            soundWave.at(this.key).play()
             Sound.rr.resolve(this)
         }
     }
@@ -109,7 +112,7 @@ class PlayableWave {
     }
 
     play() {
-        console.log(this.envelope);
+        console.log(this.envelope)
 
         this.gainNode.gain.cancelScheduledValues(0)
         this.gainNode.gain.setValueAtTime(SoundManager.ctx.currentTime, 0)
@@ -191,6 +194,7 @@ export let envelope = SoundEnvelope.default
 export function setWave(wave: SampledWave) {
     soundWave = wave
 }
+
 export function setEnvelope(env: SoundEnvelope) {
     envelope = env
 }
