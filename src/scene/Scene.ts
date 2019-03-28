@@ -46,9 +46,8 @@ export class Scene implements Renderable {
             if (this.inField) {
                 //this.hovered.
                 this.ui.showPopup(this.ui.popups.effects)
-                this.ui.popups.effects.onChosen.subscribe(effect => {
-                    console.log(effect);
-                })
+
+                if (this.hovered) this.ui.popups.effects.chooseFor(this.hovered)
             }
         })
 
@@ -58,7 +57,8 @@ export class Scene implements Renderable {
                 this.rotated += .005
                 dc.c.rotate(.005)
                 if (this.inField) this.onFieldMove()
-            }
+            },
+            easing: "easeInCubic"
         })
 
     }
@@ -80,8 +80,6 @@ export class Scene implements Renderable {
 
         anime({
             targets: this, rotated: 0, duration: 300, update: a => {
-                //console.log(this.rotated - rotated);
-                //console.log(this.rotated)
                 this.dc.c.rotate(this.rotated - rotated)
                 rotated = this.rotated
             }

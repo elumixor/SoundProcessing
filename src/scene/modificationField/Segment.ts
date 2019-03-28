@@ -3,10 +3,12 @@ import {DrawingContext} from "../../DrawingContext"
 import {container} from "tsyringe"
 import anime from "animejs"
 import {Settings} from "../../Settings"
+import {Effect} from "../../effects/Effect"
 
 export class Segment implements Renderable {
     private static dc: DrawingContext = container.resolve(DrawingContext)
     private static settings: Settings = container.resolve(Settings)
+    public effect: Effect | null = null
 
     constructor(public inDist: number, public outDist: number, private a1: number, private a2: number) {}
 
@@ -60,22 +62,25 @@ export class Segment implements Renderable {
         this.activated = false
     }
 
+    private static fillWith(color: string): void {
+        const fc = Segment.dc.c.fillStyle
+        Segment.dc.c.fillStyle = color
+        Segment.dc.c.fill()
+        Segment.dc.c.fillStyle = fc
+    }
+
     render() {
         Segment.dc.c.beginPath()
         Segment.dc.c.arc(0, 0, this.inDist, this.a1, this.a2)
         Segment.dc.c.arc(0, 0, this.outDist, this.a2, this.a1, true)
-        if (this.hovered) {
-            const fc = Segment.dc.c.fillStyle
-            Segment.dc.c.fillStyle = "green"
-            Segment.dc.c.fill()
-            Segment.dc.c.fillStyle = fc
-        } else
-            Segment.dc.c.fill()
+
+        if (this.hovered) Segment.fillWith("green")
+        else if (this.effect) Segment.fillWith(this.effect.segmentColor)
+        else Segment.dc.c.fill()
+
         Segment.dc.c.closePath()
 
-
-
-        if (!this.hovered && this.activated) {
+        if (this.activated) {
             const fs = Segment.dc.c.fillStyle
             Segment.dc.c.fillStyle = this.gradient.get()
 
@@ -87,5 +92,10 @@ export class Segment implements Renderable {
 
             Segment.dc.c.fillStyle = fs
         }
+    }
+
+    setEffect(effect: Effect) {
+        this.effect = effect
+        console.log(this.effect);
     }
 }

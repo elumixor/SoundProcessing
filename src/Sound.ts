@@ -10,6 +10,7 @@ export class Sound {
     static rr = container.resolve(ResolutionRing)
     private sector: number
     private _travelled = 0
+    private sound: SampledWave
 
     get travelled(): number {
         return this._travelled
@@ -18,21 +19,25 @@ export class Sound {
     constructor(public key: number, public velocity: number) {
         this.sector = Sound.settings.getSector(key)
         this.move()
-        soundWave.at(key).play()
+        this.sound = soundWave.copy()
+        this.sound.at(key).play()
     }
 
     move(): void {
         if (this.travelled < Sound.settings.maxTravelDistance) {
             const segment = Sound.mf.getSegment(this.travelled, Sound.settings.getSector(this.key))
-            if (segment)
+            if (segment) {
                 segment.activate()
+                if (segment.effect)
+                    this.sound = segment.effect.apply(this.sound)
+            }
             this._travelled++
 
             setTimeout(() => {
                 this.move()
             }, Sound.settings.travelTime)
         } else {
-            soundWave.at(this.key).play()
+            this.sound.at(this.key).play()
             Sound.rr.resolve(this)
         }
     }
@@ -104,7 +109,7 @@ export class SoundEnvelope {
     }
 }
 
-class PlayableWave {
+export class PlayableWave {
     private readonly gainNode: GainNode
 
     constructor(private readonly source: AudioBufferSourceNode, private readonly envelope: SoundEnvelope) {
@@ -112,8 +117,6 @@ class PlayableWave {
     }
 
     play() {
-        console.log(this.envelope)
-
         this.gainNode.gain.cancelScheduledValues(0)
         this.gainNode.gain.setValueAtTime(SoundManager.ctx.currentTime, 0)
 
@@ -149,7 +152,6 @@ export class SampledWave {
     private readonly buffer: AudioBuffer
 
     constructor(public readonly samples: number[]) {
-
         this.buffer = SoundManager.ctx.createBuffer(1, this.sampleCount, this.sampleCount * hertz(LowestMidiNote))
         const c1 = this.buffer.getChannelData(0)
         for (let j = 0; j < c1.length; j++) c1[j] = this.samples[j]
@@ -159,11 +161,14 @@ export class SampledWave {
         const src = SoundManager.ctx.createBufferSource()
         src.buffer = this.buffer
         src.detune.value = (note - LowestMidiNote) * 100
-        console.log(src.detune.value)
 
         src.loop = true
 
         return new PlayableWave(src, envelope)
+    }
+
+    copy(): SampledWave {
+        return new SampledWave(this.samples)
     }
 
     static readonly defaultWaves = [
