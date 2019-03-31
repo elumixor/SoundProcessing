@@ -1,9 +1,10 @@
 import {singleton} from "tsyringe"
 import {Overlay} from "../Overlay"
-import {setWave, soundWave, SampledWave, envelope, setEnvelope, SoundEnvelope} from "../../../Sound"
+import {setWave, soundWave, SampledWave} from "../../../Sound"
 import {clamp} from "../../../util"
 import {Settings} from "../../../Settings"
 import {Point} from "../../../common/Point"
+import {SoundEnvelope} from "../../../Sound"
 
 @singleton()
 export class WaveEditor extends Overlay {
@@ -17,7 +18,7 @@ export class WaveEditor extends Overlay {
     static readonly ampBoxes = (() => {
         const arr: HTMLDivElement[] = []
 
-        for (let i = 0; i < SampledWave.samplesMax; i++) {
+        for (let i = 0; i < soundWave.samples.length; i++) {
             const el = document.createElement("div")
             el.className = "wave-sample"
             arr.push(el)
@@ -34,17 +35,17 @@ export class WaveEditor extends Overlay {
         const samples = [...soundWave.samples]
         samples[Math.floor((clamp((e.x - this.waveBox!.offsetLeft) / this.waveBox!.offsetWidth, 0, 1))
             * soundWave.sampleCount)] = -(e.y - this.waveBox!.offsetTop) / this.waveBox!.offsetHeight * 2 + 1
-        setWave(new SampledWave(samples))
+        setWave(SampledWave.periodic(samples))
         this.repaintWave()
     }
 
     private static envPercentages(): { delay: number, attack: number, decay: number, sustain: number, release: number } {
         return {
-            delay: envelope.delay / envelope.totalDuration,
-            attack: envelope.attackDuration / envelope.totalDuration,
-            decay: envelope.decayDuration / envelope.totalDuration,
-            sustain: envelope.sustain / envelope.totalDuration,
-            release: envelope.release / envelope.totalDuration
+            delay: soundWave.envelope.delay / soundWave.envelope.totalDuration,
+            attack: soundWave.envelope.attackDuration / soundWave.envelope.totalDuration,
+            decay: soundWave.envelope.decayDuration / soundWave.envelope.totalDuration,
+            sustain: soundWave.envelope.sustain / soundWave.envelope.totalDuration,
+            release: soundWave.envelope.release / soundWave.envelope.totalDuration
         }
     }
 
@@ -52,10 +53,10 @@ export class WaveEditor extends Overlay {
         if (!(totalDuration > .1)) return
         const e = this.envPercentages()
 
-        setEnvelope(new SoundEnvelope(e.delay * totalDuration,
-            e.attack * totalDuration, envelope.attackValue, envelope.attackConvexity,
-            e.decay * totalDuration, envelope.decayValue, envelope.decayConvexity,
-            e.sustain * totalDuration, e.release * totalDuration, envelope.releaseConvexity))
+        soundWave.envelope = new SoundEnvelope(e.delay * totalDuration,
+            e.attack * totalDuration, soundWave.envelope.attackValue, soundWave.envelope.attackConvexity,
+            e.decay * totalDuration, soundWave.envelope.decayValue, soundWave.envelope.decayConvexity,
+            e.sustain * totalDuration, e.release * totalDuration, soundWave.envelope.releaseConvexity)
     }
 
     private drawEnvelope() {
@@ -69,9 +70,9 @@ export class WaveEditor extends Overlay {
 
         dc.beginPath()
         dc.lineTo(e.delay * dc.canvas.width, dc.canvas.height)
-        dc.lineTo((e.delay + e.attack) * dc.canvas.width, (1 - envelope.attackValue) * dc.canvas.height)
-        dc.lineTo((e.delay + e.attack + e.decay) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height)
-        dc.lineTo((e.delay + e.attack + e.decay + e.sustain) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height)
+        dc.lineTo((e.delay + e.attack) * dc.canvas.width, (1 - soundWave.envelope.attackValue) * dc.canvas.height)
+        dc.lineTo((e.delay + e.attack + e.decay) * dc.canvas.width, (1 - soundWave.envelope.decayValue) * dc.canvas.height)
+        dc.lineTo((e.delay + e.attack + e.decay + e.sustain) * dc.canvas.width, (1 - soundWave.envelope.decayValue) * dc.canvas.height)
         dc.lineTo(dc.canvas.width, dc.canvas.height)
         dc.closePath()
 
@@ -92,7 +93,7 @@ export class WaveEditor extends Overlay {
             let {
                 delay, attackDuration, attackValue, attackConvexity,
                 decayDuration, decayValue, decayConvexity, sustain, release, releaseConvexity
-            } = envelope
+            } = soundWave.envelope
 
             switch (this.envelopeSelected!.name) {
                 case "delay":
@@ -116,7 +117,7 @@ export class WaveEditor extends Overlay {
                     break
             }
 
-            setEnvelope(new SoundEnvelope(delay, attackDuration, attackValue, attackConvexity, decayDuration, decayValue, decayConvexity, sustain, release, releaseConvexity))
+            soundWave.envelope = new SoundEnvelope(delay, attackDuration, attackValue, attackConvexity, decayDuration, decayValue, decayConvexity, sustain, release, releaseConvexity)
         }
 
         this.drawEnvelope()
@@ -128,9 +129,9 @@ export class WaveEditor extends Overlay {
         const env = WaveEditor.envPercentages()
         const envPoints = [
             new Point(env.delay * dc.canvas.width, dc.canvas.height),
-            new Point((env.delay + env.attack) * dc.canvas.width, (1 - envelope.attackValue) * dc.canvas.height),
-            new Point((env.delay + env.attack + env.decay) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height),
-            new Point((env.delay + env.attack + env.decay + env.sustain) * dc.canvas.width, (1 - envelope.decayValue) * dc.canvas.height),
+            new Point((env.delay + env.attack) * dc.canvas.width, (1 - soundWave.envelope.attackValue) * dc.canvas.height),
+            new Point((env.delay + env.attack + env.decay) * dc.canvas.width, (1 - soundWave.envelope.decayValue) * dc.canvas.height),
+            new Point((env.delay + env.attack + env.decay + env.sustain) * dc.canvas.width, (1 - soundWave.envelope.decayValue) * dc.canvas.height),
             new Point(dc.canvas.width, dc.canvas.height)
         ]
 
@@ -165,7 +166,7 @@ export class WaveEditor extends Overlay {
             this.dc = this.envBox.getContext("2d")
             this.drawEnvelope()
 
-            this.totalDuration.value = envelope.totalDuration.toString()
+            this.totalDuration.value = soundWave.envelope.totalDuration.toString()
             this.totalDuration.addEventListener("input", () => {
                 WaveEditor.recalculateEnvelope(Number(this.totalDuration!.value))
             })

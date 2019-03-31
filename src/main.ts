@@ -4,8 +4,7 @@ import {DrawingContext} from "./DrawingContext"
 import {Scene} from "./scene/Scene"
 import {SoundManager} from "./Sound"
 import {UI} from "./ui/UI"
-import {Overlay} from "./ui/overlays/Overlay"
-import {clamp} from "./util"
+import {clamp, interpolateArray} from "./util"
 
 const dc = container.resolve(DrawingContext)
 const ui = container.resolve(UI)
@@ -28,4 +27,4 @@ dc.draw = () => {
 }
 
 dc.init()
-//ui.overlays.keyMapper.initialized.subscribe(() => ui.showOverlay(ui.overlays.waveEditor)) // todo remove later
+

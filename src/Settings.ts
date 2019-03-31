@@ -1,21 +1,29 @@
 import {singleton} from "tsyringe"
 
+export const AFrequency = 440
+export const AMidi = 69
+export const OctaveSemitones = 12
+export const LowestMidiNote = 21
+export const HighestMidiNote = 91
+export const SampleRate = 44_100
+export const SamplesPerCycle = Math.round(SampleRate / AFrequency)
+
 @singleton()
 export class Settings {
     private _key2Midi: { [key: string]: number } = {
-        "a": 48,
-        "w": 49,
-        "s": 50,
-        "e": 51,
-        "d": 52,
-        "f": 53,
-        "t": 54,
-        "g": 55,
-        "y": 56,
-        "h": 57,
-        "u": 58,
-        "j": 59,
-        "k": 60,
+        "a": AMidi - 9,
+        "w": AMidi - 8,
+        "s": AMidi - 7,
+        "e": AMidi - 6,
+        "d": AMidi - 5,
+        "f": AMidi - 4,
+        "t": AMidi - 3,
+        "g": AMidi - 2,
+        "y": AMidi - 1,
+        "h": AMidi,
+        "u": AMidi + 1,
+        "j": AMidi + 2,
+        "k": AMidi + 3,
     }
     private _midi2Midi: { [key: number]: number } = {}
 

@@ -2,7 +2,7 @@ import {Effect} from "./Effect"
 import {SampledWave} from "../Sound"
 
 export class Flanger implements Effect {
-    offset = 55
+    offset = 15
     mix = .5
 
     apply(sound: SampledWave): SampledWave {
@@ -11,7 +11,7 @@ export class Flanger implements Effect {
             newSamples.push(sound.samples[i] * (1 - this.mix) +
                 sound.samples[(i + this.offset) % sound.samples.length] * this.mix)
 
-        return new SampledWave(newSamples)
+        return new SampledWave(newSamples,sound.envelope)
     }
 
     segmentColor: string = "blue"

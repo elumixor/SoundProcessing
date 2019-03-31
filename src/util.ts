@@ -38,3 +38,19 @@ export function normalized(arr: number[]): number[] {
     const m = Math.max(...arr)
     return arr.map((a, i) => arr[i] = a / m)
 }
+
+export function interpolateArray(arr: number[], newLength: number): number[] {
+    if (arr.length < 1) return new Array<number>(newLength);
+    const newArr: number[] = []
+    for (let i = 0; i < newLength; i++) {
+        const percent = i / (newLength - 1) * (arr.length - 1)
+        const before = Math.floor(percent)
+        const after = Math.ceil(percent)
+        if (after === before) newArr.push(arr[before])
+        else {
+            const weightBefore = (percent - before) / (after - before)
+            newArr.push(arr[after] * weightBefore + arr[before] * (1 - weightBefore))
+        }
+    }
+    return newArr
+}

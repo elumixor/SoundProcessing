@@ -1,8 +1,9 @@
 import {container, singleton} from "tsyringe"
 import {Input} from "./input/Input"
-import {Settings} from "./Settings"
+import {AFrequency, AMidi, OctaveSemitones, SampleRate, SamplesPerCycle, Settings} from "./Settings"
 import {ModificationField} from "./scene/modificationField/ModificationField"
 import {ResolutionRing} from "./scene/rings/ResolutionRing"
+import {interpolateArray} from "./util"
 
 export class Sound {
     static settings = container.resolve(Settings)
@@ -18,9 +19,10 @@ export class Sound {
 
     constructor(public key: number, public velocity: number) {
         this.sector = Sound.settings.getSector(key)
-        this.move()
         this.sound = soundWave.copy()
-        this.sound.at(key).play()
+        this.sound.note = key * 100
+        this.sound.play()
+        this.move()
     }
 
     move(): void {
@@ -28,8 +30,7 @@ export class Sound {
             const segment = Sound.mf.getSegment(this.travelled, Sound.settings.getSector(this.key))
             if (segment) {
                 segment.activate()
-                if (segment.effect)
-                    this.sound = segment.effect.apply(this.sound)
+                if (segment.effect) this.sound = segment.effect.apply(this.sound)
             }
             this._travelled++
 
@@ -37,7 +38,9 @@ export class Sound {
                 this.move()
             }, Sound.settings.travelTime)
         } else {
-            this.sound.at(this.key).play()
+            this.sound = this.sound.copy()
+            this.sound.note = this.key * 100
+            this.sound.play()
             Sound.rr.resolve(this)
         }
     }
@@ -60,12 +63,6 @@ export class SoundManager {
 
     }
 }
-
-export const AFrequency = 440
-export const AMidi = 69
-export const OctaveSemitones = 12
-export const LowestMidiNote = 21
-export const HighestMidiNote = 91
 
 export function hertz(midi: number) {
     return Math.pow(2, (midi - AMidi) / OctaveSemitones) * AFrequency
@@ -97,41 +94,92 @@ export class SoundEnvelope {
 
     static get default(): SoundEnvelope {
         return new SoundEnvelope(0,
-            .1,
+            .1, 1, 1,
+            1, .5, 1,
             1,
-            1,
-            1,
-            .5,
-            1,
-            1,
-            .3,
-            2)
+            .3, 2)
+    }
+
+    static constant(totalDuration: number): SoundEnvelope {
+        return new SoundEnvelope(0,
+            0, 1, 1,
+            totalDuration, 1, 1,
+            0,
+            0, 0)
     }
 }
 
-export class PlayableWave {
+export class SampledWave {
+    private readonly buffer: AudioBuffer
     private readonly gainNode: GainNode
+    /** Note in cents */
+    private _note = AMidi * 100
+    private source: AudioBufferSourceNode
 
-    constructor(private readonly source: AudioBufferSourceNode, private readonly envelope: SoundEnvelope) {
+    get note() { return this._note }
+
+    set note(toCents: number) {
+        this._note = toCents
+        this.source.detune.value = toCents - AMidi * 100
+    }
+    bend(cents: number) {
+        this.note = this.note + cents
+    }
+
+    get sampleCount(): number {
+        return this.samples.length
+    }
+
+    // todo recalculate on setEnvelope
+
+    static periodic(samples: number[], envelope: SoundEnvelope = SoundEnvelope.default): SampledWave {
+        const newArr = interpolateArray(samples, SamplesPerCycle)
+        const bArr: number[] = []
+
+        for (let i = 0; i < envelope.totalDuration * SampleRate; i++) {
+            bArr[i] = newArr[i % newArr.length]
+        }
+
+        return new SampledWave(bArr, envelope)
+    }
+
+    static nonPeriodic(samples: number[], sampleRate?: number): SampledWave {
+        return new SampledWave(samples, SoundEnvelope.constant(samples.length / (sampleRate || SampleRate)))
+    }
+
+    constructor(public readonly samples: number[],
+                public envelope: SoundEnvelope) {
+        this.buffer = SoundManager.ctx.createBuffer(1, envelope.totalDuration * SampleRate, SampleRate)
+        const c1 = this.buffer.getChannelData(0)
+        for (let j = 0; j < c1.length; j++) c1[j] = this.samples[j % this.samples.length]
         this.gainNode = SoundManager.ctx.createGain()
+        this.source = SoundManager.ctx.createBufferSource()
+        this.source.buffer = this.buffer
+        this.source.loop = false
+    }
+
+    copy(): SampledWave {
+        return new SampledWave(this.samples, this.envelope)
     }
 
     play() {
         this.gainNode.gain.cancelScheduledValues(0)
         this.gainNode.gain.setValueAtTime(SoundManager.ctx.currentTime, 0)
 
-        this.gainNode.gain.setValueCurveAtTime([0, this.envelope.attackValue],
-            SoundManager.ctx.currentTime + this.envelope.delay,
-            this.envelope.attackDuration)
+        if (this.envelope.attackDuration > 0)
+            this.gainNode.gain.setValueCurveAtTime([0, this.envelope.attackValue],
+                SoundManager.ctx.currentTime + this.envelope.delay,
+                this.envelope.attackDuration)
 
         this.gainNode.gain.setValueCurveAtTime([this.envelope.attackValue, this.envelope.decayValue],
             SoundManager.ctx.currentTime + this.envelope.delay + this.envelope.attackDuration,
             this.envelope.decayDuration)
 
-        this.gainNode.gain.setValueCurveAtTime([this.envelope.decayValue, 0],
-            SoundManager.ctx.currentTime + this.envelope.delay + this.envelope.attackDuration
-            + this.envelope.decayDuration + this.envelope.sustain,
-            this.envelope.release)
+        if (this.envelope.release > 0)
+            this.gainNode.gain.setValueCurveAtTime([this.envelope.decayValue, 0],
+                SoundManager.ctx.currentTime + this.envelope.delay + this.envelope.attackDuration
+                + this.envelope.decayDuration + this.envelope.sustain,
+                this.envelope.release)
 
         this.source.connect(this.gainNode)
         this.gainNode.connect(SoundManager.ctx.destination)
@@ -144,42 +192,17 @@ export class PlayableWave {
         }, (this.envelope.delay + this.envelope.attackDuration
             + this.envelope.decayDuration + this.envelope.sustain + this.envelope.release) * 1000)
     }
-}
 
-export class SampledWave {
-    static readonly samplesMax = 256
-    sampleCount: number = SampledWave.samplesMax
-    private readonly buffer: AudioBuffer
-
-    constructor(public readonly samples: number[]) {
-        this.buffer = SoundManager.ctx.createBuffer(1, this.sampleCount, this.sampleCount * hertz(LowestMidiNote))
-        const c1 = this.buffer.getChannelData(0)
-        for (let j = 0; j < c1.length; j++) c1[j] = this.samples[j]
-    }
-
-    at(note: number): PlayableWave {
-        const src = SoundManager.ctx.createBufferSource()
-        src.buffer = this.buffer
-        src.detune.value = (note - LowestMidiNote) * 100
-
-        src.loop = true
-
-        return new PlayableWave(src, envelope)
-    }
-
-    copy(): SampledWave {
-        return new SampledWave(this.samples)
-    }
-
-    static readonly defaultWaves = [
+    private static readonly defaultSamples = SamplesPerCycle
+    static readonly defaults = [
         // Sine wave
-        new SampledWave((() => {
+        (() => {
             const arr: number[] = []
-            for (let i = 0; i < SampledWave.samplesMax; i++) {
-                arr.push(Math.sin(i / SampledWave.samplesMax * 2 * Math.PI))
+            for (let i = 0; i < SampledWave.defaultSamples; i++) {
+                arr.push(Math.sin(i / SampledWave.defaultSamples * 2 * Math.PI))
             }
-            return arr
-        })())
+            return SampledWave.periodic(arr, SoundEnvelope.default)
+        })()
 
         // Square
 
@@ -193,13 +216,8 @@ export class SampledWave {
     ]
 }
 
-export let soundWave = SampledWave.defaultWaves[0]
-export let envelope = SoundEnvelope.default
+export let soundWave = SampledWave.defaults[0]
 
 export function setWave(wave: SampledWave) {
     soundWave = wave
-}
-
-export function setEnvelope(env: SoundEnvelope) {
-    envelope = env
 }

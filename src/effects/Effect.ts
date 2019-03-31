@@ -1,4 +1,4 @@
-import {PlayableWave, SampledWave} from "../Sound"
+import {SampledWave} from "../Sound"
 
 export interface Effect {
     segmentColor: string

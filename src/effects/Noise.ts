@@ -2,14 +2,14 @@ import {Effect} from "./Effect"
 import {SampledWave} from "../Sound"
 
 export class Noise implements Effect {
-    mix = .1
+    mix = .3
 
     apply(sound: SampledWave): SampledWave {
         const newSamples: number[] = []
         for (let i = 0; i < sound.samples.length; i++) {
             newSamples.push((Math.random() * 2 - 1) * this.mix + sound.samples[i] * (1 - this.mix))
         }
-        return new SampledWave(newSamples)
+        return new SampledWave(newSamples, sound.envelope)
     }
 
     segmentColor: string = "grey"
