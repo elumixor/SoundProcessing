@@ -58,11 +58,85 @@ and send it travelling to the `resolution circe`.
 * Velocity
 
 ##### Transformational modifiers
-* Flanger
-* Chorus
-* Distortion
-* Compressor
-* Reverberation
+* ##### Flanger [(code)](https://github.com/elumixor/SoundProcessing/blob/master/src/effects/Flanger.ts)
+> Flanging is an audio effect produced by mixing two identical 
+signals together, one signal delayed by a small and gradually 
+changing period - [Wikipedia](https://en.wikipedia.org/wiki/Flanging)
+
+[**Video demonstration**](https://www.youtube.com/watch?v=DNhxzbiDyRk)
+
+Our `Sound`s are essentially represented as a sample buffer.
+Thus, simple flanging effect could be done as such:
+
+```typescript
+const delaySamples = 25
+const mix = 0.5
+    
+/** Takes sound samples, applies flanging and 
+  * returns new sound samples, representing new sound */  
+function apply(soundSamples: number[]): number[] {
+    const newSamples: number[] = []
+    for (let i = 0; i < soundSamples.length; i++) {
+        const resultSample = soundSamples[i] * (1 - mix) // original sample
+                            + soundSamples[(i + delaySamples) % soundSamples.length] * mix // offset sample
+        newSamples.push(resultSample)
+    }
+
+    return newSamples
+}
+```
+
+Normally we would rather specify sample delay as offset by ms:
+```typescript
+const offsetMs = 15
+const SampleRate = 44100
+
+// to transform into sample domain
+const offsetSamples = offsetMs / 1000 * SampleRate
+```
+ 
+Usually, though, flanging implies varying (oscillating) delay, and 
+express its frequency in hertz. To calculate the offset in samples
+(i.e. to determine which sample we should add to the original wave)
+we use:
+```typescript
+const SampleRate = 44100
+const offsetMs = 15
+const oscillationFrequency = 1/2
+
+function getOffset(sample: number): number {
+    return offsetMs * Math.cos(sample/SampleRate * oscillationFrequency * 2 * Math.PI)
+}
+```
+
+When put together, this gives us a `Flanger`
+```typescript
+class Flanger {
+    SampleRate = 44100
+    offsetMs = 15
+    oscillationFrequency = 1/2
+    mix = .5
+
+    getOffset(sample: number): number {
+        return Math.cos(sample/this.SampleRate * this.oscillationFrequency * 2 * Math.PI) * this.offsetMs
+    }
+
+    apply(soundSamples: number[]): number[] {
+        const newSamples: number[] = []
+        for (let i = 0; i < soundSamples.length; i++)
+            newSamples.push(soundSamples[i] * (1 - this.mix) +
+                soundSamples[Math.round(i + this.getOffset(i)) % soundSamples.length] * this.mix)
+
+        return newSamples
+    }
+}
+```
+[Flanger.ts](https://github.com/elumixor/SoundProcessing/blob/master/src/effects/Flanger.ts)
+
+* ##### Chorus
+* ##### Distortion
+* ##### Compressor
+* ##### Reverberation
 
 #### Wavetable sound editor
 Allows to create custom sound by defining wave
@@ -101,7 +175,7 @@ todo description implementation
 ### Todo
 - [x] Project idea, setup repository, typescript + webpack
 - [x] Basic readme
-- [ ] Basic application structure 
+- [x] Basic application structure
 - [x] Application view - rings, mf
 - [x] Play from MIDI keyboard
 - [x] Play from computer keyboard
@@ -115,7 +189,8 @@ todo description implementation
 - [ ] Playing patterns
 - [x] Travelling sound to the resolution ring
 - [x] Basic animations
-- [ ] Modifiers basics, editing, removal, changing location and swapping
+- [x] Modifiers basics
+    - [ ] Editing, removal, changing location and swapping
 - [ ] Directional modifiers
     - [ ] Delay
     - [ ] Router
@@ -123,11 +198,12 @@ todo description implementation
     - [ ] Mirror
 - [ ] Update readme docs + code docs
 - [ ] Transformational modifiers
-    - [ ] Flanger
+    - [x] Flanger
     - [ ] Chorus
     - [ ] Distortion
     - [ ] Compressor
     - [ ] Reverberation
+- [ ] Parametrize modifiers - detailed parameter window
 - [ ] Update readme docs + code docs
 - [ ] Quantization
 - [ ] Visual effects
