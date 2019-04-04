@@ -4,6 +4,7 @@ import {AFrequency, AMidi, OctaveSemitones, SampleRate, SamplesPerCycle, Setting
 import {ModificationField} from "./scene/modificationField/ModificationField"
 import {ResolutionRing} from "./scene/rings/ResolutionRing"
 import {interpolateArray} from "./util"
+import {Flanger} from "./effects/Flanger"
 
 export class Sound {
     static settings = container.resolve(Settings)

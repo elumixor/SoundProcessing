@@ -67,6 +67,7 @@ export class UI {
                         const source = SoundManager.ctx.createBufferSource()
                         source.buffer = buffer
 
+                        // todo Stereo wave
                         setWave(SampledWave.nonPeriodic(Array.from(buffer.getChannelData(0))))
                     })
                 }
